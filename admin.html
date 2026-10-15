@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>wynuser admin</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: left rail with sections | working area. Same monochrome glass as the site, denser. */
+:root{
+  color-scheme:dark;
+  --bg:#09090a;--ink:#f1f1f2;--mute:#9c9ca3;--faint:#606067;--line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);--glass:rgba(255,255,255,.04);
+  --f-body:"Geist","Segoe UI",system-ui,sans-serif;--f-mono:"Geist Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body);-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(900px 500px at 100% -10%,rgba(255,255,255,.06),transparent 65%);background-attachment:fixed}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+a{color:var(--ink)}
+:focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--f-mono)}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:14px;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:10px;border:1px solid var(--line-2);padding:0 13px;font-weight:600;font-size:13px;background:rgba(255,255,255,.04);white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.09)}
+.btn[disabled]{opacity:.4;cursor:wait}
+.btn.primary{background:var(--ink);color:#000;border-color:var(--ink)}
+.btn.primary:hover{background:#fff}
+.btn.danger{border-color:rgba(255,255,255,.55)}
+.btn.danger:hover{background:#fff;color:#000}
+.btn.ghost{border-color:var(--line)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px;border-radius:8px}
+.inp,select.inp{width:100%;height:38px;border-radius:10px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);padding:0 11px;outline:none}
+select.inp option{background:#151517}
+textarea.inp{height:auto;min-height:80px;padding:9px 11px;resize:vertical}
+.inp:focus{border-color:rgba(255,255,255,.42)}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:12.5px;color:var(--mute);font-weight:500}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:rgba(255,255,255,.05);font-size:13px}
+.muted{color:var(--faint)}
+.pill{display:inline-flex;align-items:center;height:20px;font:600 10.5px var(--f-mono);padding:0 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--line-2);margin-left:6px;vertical-align:1px;white-space:nowrap}
+.pill.solid,.pill.approved{background:var(--ink);color:#000;border-color:var(--ink)}
+.pill.pending{border-style:dashed}
+.pill.rejected,.pill.off{color:var(--faint);text-decoration:line-through}
+.av{display:inline-grid;place-items:center;flex:none;width:36px;height:36px;border-radius:10px;overflow:hidden;background:#232326;color:#ddd;font-weight:600;text-transform:uppercase}
+.av img{width:100%;height:100%;object-fit:cover}
+.av.lg{width:64px;height:64px;border-radius:16px;font-size:24px}
+
+/* login / setup */
+.login{max-width:380px;margin:14vh auto 0;padding:28px;display:flex;flex-direction:column;gap:14px}
+.login img{width:64px;margin:0 auto}
+.login p{margin:0;color:var(--mute);text-align:center}
+.setup{max-width:560px;text-align:left}
+.setup h2{margin:0;font-size:20px}
+.setup p{text-align:left;margin:0;color:var(--mute)}
+.setup ol{margin:0;padding-left:20px;display:grid;gap:8px}
+.setup code{font:500 12.5px var(--f-mono);background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px}
+
+/* shell */
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px;padding:18px 12px;border-right:1px solid var(--line);background:rgba(0,0,0,.25)}
+.rail .brand{display:flex;align-items:center;gap:10px;padding:4px 10px 16px;font-weight:600}
+.rail .brand img{width:30px}
+.rail .brand span{font:500 10.5px var(--f-mono);color:var(--faint);letter-spacing:.2em;text-transform:uppercase;display:block}
+.rail button.tab{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:10px;color:var(--mute);font-weight:500;text-align:left}
+.rail button.tab:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+.rail button.tab.on{color:var(--ink);background:rgba(255,255,255,.07)}
+.rail .n{font:500 11px var(--f-mono);padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.07)}
+.rail .n.hot{background:#fff;color:#000}
+.rail .bottom{margin-top:auto;display:flex;flex-direction:column;gap:6px}
+main{padding:22px 26px 60px;min-width:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.top h1{margin:0;font-size:24px;font-weight:600;letter-spacing:-.03em}
+.top p{margin:2px 0 0;color:var(--faint)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filters .inp{max-width:320px}
+.seg{display:inline-flex;padding:3px;border-radius:10px;border:1px solid var(--line)}
+.seg button{height:28px;padding:0 11px;border-radius:7px;color:var(--mute);font-size:13px;font-weight:500}
+.seg button.on{background:rgba(255,255,255,.09);color:var(--ink)}
+
+/* overview */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{padding:16px 18px;text-align:left}
+.kpi b{display:block;font:500 28px var(--f-mono);letter-spacing:-.04em}
+.kpi span{color:var(--faint);font-size:12.5px}
+.kpi.hot{border-color:rgba(255,255,255,.4)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.panel{padding:16px 18px}
+.panel h3{margin:0 0 10px;font-size:14px;font-weight:600}
+
+/* lists */
+.list{display:flex;flex-direction:column;gap:10px}
+.item{padding:14px;display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:16px;align-items:start}
+.item.slim{grid-template-columns:auto minmax(0,1fr) auto;align-items:center}
+.proof{width:130px;height:130px;border-radius:12px;background:#000;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;color:var(--faint);font-size:12px}
+.proof img{width:100%;height:100%;object-fit:cover}
+.meta{min-width:0}
+.meta .cat{font-size:11.5px;font-weight:500;color:var(--faint)}
+.meta h3{margin:2px 0 3px;font:500 17px var(--f-mono);word-break:break-all}
+.meta .desc{margin:6px 0;color:var(--mute);white-space:pre-wrap;word-break:break-word;max-height:6em;overflow:auto;font-size:13px}
+.tech{display:flex;flex-wrap:wrap;gap:4px 14px;font:500 12px var(--f-mono);color:var(--faint)}
+.tech b{color:var(--mute);font-weight:500}
+.tech button{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.acts{display:flex;flex-direction:column;gap:6px;min-width:120px}
+.empty{padding:40px;text-align:center;color:var(--faint);border:1px dashed var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--faint);font-weight:500;font-size:12px;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+.tablewrap{overflow-x:auto;border-radius:14px}
+td .who{display:flex;align-items:center;gap:10px;min-width:160px}
+td .who b{display:block}
+td .who span{font-size:12px;color:var(--faint)}
+
+/* chat */
+.chat{display:grid;grid-template-columns:280px minmax(0,1fr);height:min(74vh,700px);overflow:hidden;padding:0}
+.c-list{border-right:1px solid var(--line);overflow:auto;padding:6px}
+.c-item{display:flex;gap:10px;align-items:center;width:100%;padding:10px;border-radius:10px;text-align:left;min-width:0}
+.c-item:hover{background:rgba(255,255,255,.03)}
+.c-item.on{background:rgba(255,255,255,.08)}
+.c-item > div{min-width:0;flex:1}
+.c-item .last{font-size:12.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-item .dotu{width:8px;height:8px;border-radius:50%;background:#fff;flex:none}
+.c-main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.c-head{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:600;display:flex;align-items:center;gap:10px}
+.c-body{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:4px}
+.msg{position:relative;max-width:76%;padding:8px 12px;border-radius:14px;white-space:pre-wrap;word-break:break-word;align-self:flex-start;background:rgba(255,255,255,.07);border:1px solid var(--line)}
+.msg.mine{align-self:flex-end;background:var(--ink);color:#000;border-color:var(--ink)}
+.msg small{display:block;font-size:10.5px;opacity:.55;margin-top:2px}
+.msg .del{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#fff;color:#000;font-weight:700;display:none;place-items:center;font-size:12px}
+.msg:hover .del{display:grid}
+.c-input{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.c-empty{flex:1;display:grid;place-items:center;color:var(--faint);padding:20px;text-align:center}
+
+/* drawer / dialog */
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:flex;justify-content:flex-end;animation:fade .15s}
+.scrim.center{justify-content:center;align-items:center;padding:20px}
+@keyframes fade{from{opacity:0}}
+.drawer{width:min(560px,100%);height:100%;overflow:auto;background:#111113;border-left:1px solid var(--line-2);padding:22px;animation:slide .2s ease-out}
+@keyframes slide{from{transform:translateX(30px);opacity:0}}
+.dialog{width:min(520px,100%);max-height:90vh;overflow:auto;background:#121214;border:1px solid var(--line-2);border-radius:18px;padding:22px}
+.d-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+.d-head h2{margin:0;font-size:19px}
+.x{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--mute);font-size:18px}
+.x:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+.sec{border-top:1px solid var(--line);padding:16px 0}
+.sec h4{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--mute)}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 12px;font-size:13px}
+.kv dt{color:var(--faint)}
+.kv dd{margin:0;word-break:break-all;font-family:var(--f-mono);font-size:12.5px}
+.secret{font:600 18px var(--f-mono);padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.08);user-select:all}
+.switch{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.switch:first-of-type{border-top:0}
+.switch b{display:block}
+.switch span{color:var(--faint);font-size:12.5px}
+.toggle{position:relative;width:44px;height:26px;border-radius:13px;background:rgba(255,255,255,.12);flex:none;transition:background .15s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#888;transition:transform .15s,background .15s}
+.toggle.on{background:#fff}
+.toggle.on::after{transform:translateX(18px);background:#000}
+.log td:first-child{white-space:nowrap;color:var(--faint);font-family:var(--f-mono);font-size:12px}
+.lightbox{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.9);display:grid;place-items:center;padding:20px;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:92vh;border-radius:10px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:10px 16px;border-radius:10px;z-index:70;font-weight:600;background:var(--ink);color:#000;max-width:calc(100% - 32px)}
+.mobnav{display:none}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .rail{display:none}
+  .mobnav{display:flex;gap:6px;overflow-x:auto;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(9,9,10,.92);z-index:5}
+  .mobnav button{flex:none;padding:6px 12px;border-radius:999px;border:1px solid var(--line);color:var(--mute);font-weight:500}
+  .mobnav button.on{background:var(--ink);color:#000;border-color:var(--ink)}
+  main{padding:16px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .grid2{grid-template-columns:1fr}
+  .item{grid-template-columns:1fr}
+  .item.slim{grid-template-columns:auto minmax(0,1fr)}
+  .item.slim .acts{grid-column:1/-1}
+  .proof{width:100%;height:200px}
+  .acts{flex-direction:row;flex-wrap:wrap;min-width:0}
+  .chat{grid-template-columns:1fr;height:auto}
+  .c-list{max-height:220px;border-right:0;border-bottom:1px solid var(--line)}
+  .c-main{height:60vh}
+  .two{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="overlay"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const money = n => "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const when = t => t ? new Date(t).toLocaleString() : "—";
+  const ago = t => { if (!t) return "—"; const s = (Date.now() - t) / 1000 | 0; if (s < 60) return "just now"; const m = s / 60 | 0; if (m < 60) return m + "m ago"; const h = m / 60 | 0; if (h < 24) return h + "h ago"; return (h / 24 | 0) + "d ago"; };
+  const SOCIAL = ["Minecraft", "Roblox", "Telegram", "Discord", "TikTok", "Instagram", "X - Twitter"];
+  const CATS = { usernames: ["Usernames", SOCIAL], numbers: ["Numbers", []], proxy: ["Proxy", SOCIAL], gifts: ["Gifts", []], gaming: ["Gaming", ["Minecraft", "Roblox", "CS GO", "Fortnite"]], other: ["Other", []] };
+  const AT = { usernames: true, proxy: true };
+  const title = l => (AT[l.category] ? "@" : "") + l.title;
+  const DURATIONS = [["60", "1 hour"], ["1440", "24 hours"], ["10080", "7 days"], ["43200", "30 days"], ["0", "Forever"]];
+  const durSelect = (id, def = "1440") => `<select class="inp" id="${id}">${DURATIONS.map(([v, l]) => `<option value="${v}" ${v === def ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  const avatar = (u, cls = "") => {
+    if (!u) return `<span class="av ${cls}">?</span>`;
+    if (u.staff || u.key === "support") return `<span class="av ${cls}" style="background:#000"><img src="logo.png" alt="" style="padding:14%"></span>`;
+    return u.avatarVer ? `<span class="av ${cls}"><img src="/api/avatar?u=${encodeURIComponent(u.key)}&v=${u.avatarVer}" alt=""></span>` : `<span class="av ${cls}">${esc((u.username || "?")[0])}</span>`;
+  };
+
+  let key = "";
+  try { key = localStorage.getItem("wyn_admin") || ""; } catch {}
+  const S = { tab: "overview", stats: {}, items: [], users: [], bans: [], support: [], log: [], settings: null, q: "", threadsFilter: "approved", proofs: {}, chatWith: null };
+  let chatTimer = null;
+
+  async function call(action, data = {}) {
+    const r = await fetch("/api/admin", { method: "POST", headers: { "content-type": "application/json", "x-admin-key": key }, body: JSON.stringify({ action, ...data }) });
+    if (!(r.headers.get("content-type") || "").includes("json")) { renderSetup("functions"); throw new Error("setup"); }
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 500 && /ADMIN_PASSWORD/.test(d.error || "")) { renderSetup("password"); throw new Error("setup"); }
+    if (r.status === 401) { logout(d.error); throw new Error(d.error); }
+    if (!r.ok) throw new Error(d.error || "Request failed.");
+    return d;
+  }
+  function toast(m) { $(".toast")?.remove(); const t = document.createElement("div"); t.className = "toast"; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+  const act = async (btn, fn, ok) => {
+    if (btn) btn.disabled = true;
+    try { const r = await fn(); if (ok) toast(typeof ok === "function" ? ok(r) : ok); await refresh(); return r; }
+    catch (e) { if (e.message !== "setup") toast(e.message); }
+    finally { if (btn) btn.disabled = false; }
+  };
+
+  /* ================= login & setup ================= */
+  function renderLogin(msg = "") {
+    $("#app").innerHTML = `<form class="login glass" id="login" method="post" action="#" autocomplete="on">
+      <img src="logo.png" alt="wynuser"><p>Moderator panel</p>
+      <input type="text" name="username" value="wynuser-admin" autocomplete="username" hidden readonly>
+      <input class="inp" id="pw" name="password" type="password" placeholder="Admin password" autocomplete="current-password" required>
+      ${msg ? `<div class="err">${esc(msg)}</div>` : ""}
+      <button class="btn primary" type="submit" style="height:42px">Sign in</button></form>`;
+    $("#pw").focus();
+    $("#login").onsubmit = async e => {
+      e.preventDefault();
+      key = $("#pw").value;
+      try {
+        await loadAll();
+        try { localStorage.setItem("wyn_admin", key); } catch {}
+        try { if (window.PasswordCredential) navigator.credentials.store(new PasswordCredential({ id: "wynuser-admin", password: key })).catch(() => {}); } catch {}
+      } catch (err) { if (key && err.message !== "setup") renderLogin(err.message); }
+    };
+  }
+  function logout(msg) { key = ""; clearInterval(chatTimer); try { localStorage.removeItem("wyn_admin"); } catch {} renderLogin(msg || ""); }
+  function renderSetup(kind) {
+    const steps = kind === "functions" ? `
+      <h2>The server part isn't running</h2>
+      <p>The pages are online, but Netlify Functions (accounts, threads, admin) were not deployed. This happens when the folder is dragged into Netlify Drop.</p>
+      <ol><li>Put the contents of the <b>wynuser</b> folder in a GitHub repository.</li>
+        <li>Netlify → <b>Add new site → Import an existing project → GitHub</b> → pick it → <b>Deploy</b>.</li>
+        <li>Site configuration → <b>Environment variables</b> → add <code>ADMIN_PASSWORD</code>.</li>
+        <li>Deploys → <b>Trigger deploy</b>, then open <code>/admin</code> again.</li></ol>` : `
+      <h2>Set your admin password</h2>
+      <p>The server is running. It just doesn't have an admin password yet.</p>
+      <ol><li>Netlify → your site → <b>Site configuration → Environment variables → Add a variable</b>.</li>
+        <li>Key <code>ADMIN_PASSWORD</code>, value: a long password only you know.</li>
+        <li>Deploys → <b>Trigger deploy</b>, wait for Published, reload this page.</li></ol>`;
+    $("#app").innerHTML = `<section class="login glass setup">${steps}<button class="btn primary" type="button" id="retry" style="height:42px">Check again</button></section>`;
+    $("#retry").onclick = probe;
+  }
+  async function probe() {
+    try {
+      const r = await fetch("/api/admin", { method: "POST", headers: { "content-type": "application/json", "x-admin-key": key || "-" }, body: '{"action":"stats"}' });
+      if (!(r.headers.get("content-type") || "").includes("json")) return renderSetup("functions");
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 500 && /ADMIN_PASSWORD/.test(d.error || "")) return renderSetup("password");
+      if (r.ok) return loadAll();
+      renderLogin();
+    } catch { renderSetup("functions"); }
+  }
+
+  /* ================= data ================= */
+  async function loadAll() {
+    const [st, l, u, b, s, lg] = await Promise.all([call("stats"), call("list"), call("users"), call("bans"), call("supportInbox"), call("log")]);
+    Object.assign(S, { stats: st, items: l.items, users: u.items, bans: b.items, support: s.items, log: lg.items });
+    render();
+  }
+  const refresh = () => loadAll().catch(() => {});
+
+  /* ================= shell ================= */
+  const TABS = [
+    ["overview", "Overview"], ["review", "Review"], ["threads", "Threads"], ["members", "Members"],
+    ["support", "Support"], ["bans", "Bans"], ["settings", "Settings"], ["log", "Log"],
+  ];
+  function count(k) {
+    if (k === "review") return [S.stats.pending || 0, true];
+    if (k === "threads") return [S.stats.live || 0];
+    if (k === "members") return [S.stats.users || 0];
+    if (k === "support") return [S.stats.supportUnread || 0, true];
+    if (k === "bans") return [S.bans.length];
+    return [null];
+  }
+  function render() {
+    clearInterval(chatTimer);
+    const nav = TABS.map(([k, l]) => { const [n, hot] = count(k);
+      return `<button type="button" class="tab ${S.tab === k ? "on" : ""}" data-tab="${k}">${l}${n !== null ? `<span class="n ${hot && n ? "hot" : ""}">${n}</span>` : ""}</button>`; }).join("");
+    $("#app").innerHTML = `<div class="shell">
+      <aside class="rail"><div class="brand"><img src="logo.png" alt=""><div>wynuser<span>admin</span></div></div>${nav}
+        <div class="bottom"><a class="btn ghost" href="/" target="_blank" style="text-decoration:none">Open site</a><button class="btn ghost" type="button" id="refresh">Refresh</button><button class="btn ghost" type="button" id="out">Sign out</button></div></aside>
+      <div style="min-width:0"><nav class="mobnav">${TABS.map(([k, l]) => `<button type="button" data-tab="${k}" class="${S.tab === k ? "on" : ""}">${l}</button>`).join("")}<button type="button" id="out2">Sign out</button></nav>
+      <main id="main"></main></div></div>`;
+    $$("[data-tab]").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.q = ""; render(); });
+    $("#refresh").onclick = () => refresh().then(() => toast("Updated"));
+    $("#out").onclick = $("#out2").onclick = () => logout();
+    ({ overview: vOverview, review: vReview, threads: vThreads, members: vMembers, support: vSupport, bans: vBans, settings: vSettings, log: vLog })[S.tab]();
+  }
+  const top = (h, p = "", right = "") => `<div class="top"><div><h1>${h}</h1>${p ? `<p>${p}</p>` : ""}</div><div class="row">${right}</div></div>`;
+  const searchBox = (ph, rerender) => {
+    const qi = $("#q"); if (!qi) return;
+    qi.oninput = () => { S.q = qi.value; const p = qi.selectionStart; rerender(); const n = $("#q"); n.focus(); n.setSelectionRange(p, p); };
+  };
+
+  /* ================= overview ================= */
+  function vOverview() {
+    const st = S.stats;
+    $("#main").innerHTML = top("Overview", "Everything that needs you, at a glance.") + `
+      <div class="kpis">
+        <button class="kpi glass ${st.pending ? "hot" : ""}" data-go="review"><b>${st.pending || 0}</b><span>Waiting for review</span></button>
+        <button class="kpi glass" data-go="threads"><b>${st.live || 0}</b><span>Live threads</span></button>
+        <button class="kpi glass" data-go="members"><b>${st.users || 0}</b><span>Members</span></button>
+        <button class="kpi glass ${st.supportUnread ? "hot" : ""}" data-go="support"><b>${st.supportUnread || 0}</b><span>Unread in support</span></button>
+        <div class="kpi glass"><b>${st.today || 0}</b><span>Threads posted today</span></div>
+        <div class="kpi glass"><b>${st.pinned || 0}</b><span>Pinned threads</span></div>
+        <button class="kpi glass" data-go="bans"><b>${S.bans.length}</b><span>Active bans</span></button>
+        <div class="kpi glass"><b>${S.users.filter(u => u.muted).length}</b><span>Muted members</span></div>
+      </div>
+      <div class="grid2">
+        <section class="panel glass"><h3>Quick actions</h3>
+          <div class="row"><button class="btn" type="button" id="q-official">Post official thread</button><button class="btn" type="button" data-go="settings">Edit notice</button><button class="btn" type="button" data-go="settings">Message everyone</button></div>
+          <div class="field" style="margin:14px 0 0"><label for="q-user">Open a member</label>
+            <form class="row" id="q-user-f"><input class="inp" id="q-user" placeholder="username" style="flex:1"><button class="btn primary" type="submit">Open</button></form></div>
+        </section>
+        <section class="panel glass"><h3>Latest actions</h3>${S.log.slice(0, 8).map(e => `<div class="tech" style="padding:5px 0"><span>${ago(e.at)}</span><b>${esc(e.action)}</b><span>${esc(e.target)}</span></div>`).join("") || `<p class="muted">Nothing yet.</p>`}</section>
+      </div>`;
+    $$("[data-go]").forEach(b => b.onclick = () => { S.tab = b.dataset.go; render(); });
+    $("#q-official").onclick = () => threadEditor(null);
+    $("#q-user-f").onsubmit = e => { e.preventDefault(); const v = $("#q-user").value.trim(); if (v) memberDrawer(v); };
+  }
+
+  /* ================= review ================= */
+  async function loadProof(id) {
+    if (S.proofs[id] !== undefined) return;
+    S.proofs[id] = null;
+    try { S.proofs[id] = (await call("proof", { id })).proof || ""; } catch { S.proofs[id] = ""; }
+    const box = document.querySelector(`[data-proof="${CSS.escape(id)}"]`);
+    if (box) box.innerHTML = S.proofs[id] ? `<img src="${S.proofs[id]}" alt="Proof">` : "No proof";
+  }
+  function threadCard(i, mode) {
+    const pr = S.proofs[i.id];
+    return `<article class="item glass" data-row="${esc(i.id)}">
+      <button class="proof" type="button" data-proof="${esc(i.id)}" data-zoom="${esc(i.id)}" title="Open full size">${i.official ? "Official" : pr ? `<img src="${pr}" alt="Proof">` : pr === "" ? "No proof" : "Loading…"}</button>
+      <div class="meta">
+        <div class="cat">${esc(CATS[i.category]?.[0] || i.category)}${i.sub ? " · " + esc(i.sub) : ""}<span class="pill ${i.status}">${i.status}</span>${i.pinned ? `<span class="pill solid">pinned</span>` : ""}${i.official ? `<span class="pill">official</span>` : ""}</div>
+        <h3>${esc(title(i))}</h3>
+        <div class="mono">${money(i.price)}</div>
+        <div class="desc">${esc(i.description || "No description.")}</div>
+        <div class="tech">
+          <span>Author <button type="button" data-member="${esc(i.author)}">${esc(i.authorName || i.author)}</button></span>
+          ${i.ip ? `<span>IP <b>${esc(i.ip)}</b></span>` : ""}
+          <span>Posted <b>${esc(when(i.createdAt))}</b></span>
+          ${i.modNote ? `<span>Note <b>${esc(i.modNote)}</b></span>` : ""}
+        </div>
+      </div>
+      <div class="acts">
+        ${i.status !== "approved" ? `<button class="btn primary" type="button" data-act="approve">Approve</button>` : ""}
+        ${i.status === "approved" ? `<button class="btn" type="button" data-act="${i.pinned ? "unpin" : "pin"}">${i.pinned ? "Unpin" : "Pin"}</button>` : ""}
+        <button class="btn" type="button" data-act="edit">Edit</button>
+        ${i.status !== "rejected" ? `<button class="btn" type="button" data-act="reject">${i.status === "approved" ? "Take down" : "Reject"}</button>` : ""}
+        ${i.official ? "" : `<button class="btn" type="button" data-member="${esc(i.author)}">Author…</button>`}
+        <button class="btn ghost" type="button" data-act="delete">Delete</button>
+      </div></article>`;
+  }
+  function bindThreadCards(list) {
+    list.forEach(i => !i.official && loadProof(i.id));
+    $$("[data-zoom]").forEach(b => b.onclick = () => {
+      const src = S.proofs[b.dataset.zoom]; if (!src) return;
+      const lb = document.createElement("div"); lb.className = "lightbox"; lb.innerHTML = `<img src="${src}" alt="Proof">`;
+      lb.onclick = () => lb.remove(); document.body.appendChild(lb);
+    });
+    $$("[data-member]").forEach(b => b.onclick = () => memberDrawer(b.dataset.member));
+    $$("[data-act]").forEach(b => b.onclick = async () => {
+      const id = b.closest("[data-row]").dataset.row, a = b.dataset.act, item = S.items.find(x => x.id === id);
+      if (a === "edit") return threadEditor(item);
+      if (a === "delete") {
+        if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Click again"; return; }
+        return act(b, () => call("delete", { id }), "Deleted");
+      }
+      if (a === "approve") return act(b, () => call("status", { id, status: "approved" }), "Approved, it's live");
+      if (a === "reject") return act(b, () => call("status", { id, status: "rejected" }), "Taken down");
+      if (a === "pin" || a === "unpin") return act(b, () => call("pin", { id, pinned: a === "pin" }), a === "pin" ? "Pinned to the top" : "Unpinned");
+    });
+  }
+  function vReview() {
+    const list = S.items.filter(i => i.status === "pending");
+    $("#main").innerHTML = top("Review", "New threads wait here until you approve them.") +
+      `<div class="list">${list.length ? list.map(i => threadCard(i)).join("") : `<div class="empty">Nothing waiting. Nice.</div>`}</div>`;
+    bindThreadCards(list);
+  }
+
+  /* ================= threads ================= */
+  function vThreads() {
+    const q = S.q.toLowerCase(), f = S.threadsFilter;
+    const list = S.items.filter(i => (f === "all" || (f === "pinned" ? i.pinned : i.status === f)) && (!q || [i.title, i.authorName, i.author, i.sub].join(" ").toLowerCase().includes(q)));
+    $("#main").innerHTML = top("Threads", "Edit, pin, take down or delete any thread.", `<button class="btn primary" type="button" id="new-off">Post official thread</button>`) + `
+      <div class="filters"><span class="seg">${[["approved", "Live"], ["pinned", "Pinned"], ["rejected", "Rejected"], ["pending", "Pending"], ["all", "All"]].map(([k, l]) => `<button type="button" data-f="${k}" class="${f === k ? "on" : ""}">${l}</button>`).join("")}</span>
+        <input class="inp" id="q" placeholder="Search title or author" value="${esc(S.q)}"></div>
+      <div class="list">${list.length ? list.map(i => threadCard(i)).join("") : `<div class="empty">No threads here.</div>`}</div>`;
+    $$("[data-f]").forEach(b => b.onclick = () => { S.threadsFilter = b.dataset.f; vThreads(); });
+    $("#new-off").onclick = () => threadEditor(null);
+    searchBox("", vThreads);
+    bindThreadCards(list);
+  }
+
+  function threadEditor(item) {
+    const isNew = !item;
+    const i = item || { category: "usernames", sub: "Telegram", title: "", price: "", description: "" };
+    const subOpts = c => CATS[c][1].map(s => `<option ${s === i.sub ? "selected" : ""}>${esc(s)}</option>`).join("");
+    const d = dialog(`<div class="d-head"><h2>${isNew ? "Official thread" : "Edit thread"}</h2><button class="x" type="button" data-close>×</button></div>
+      ${isNew ? `<p class="muted" style="margin:-8px 0 14px">Posted as “wynuser”, goes live right away, no proof needed.</p>` : ""}
+      <div class="two">
+        <div class="field"><label for="e-cat">Category</label><select class="inp" id="e-cat">${Object.entries(CATS).map(([k, [l]]) => `<option value="${k}" ${k === i.category ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+        <div class="field"><label for="e-sub">Platform</label><select class="inp" id="e-sub">${subOpts(i.category)}</select></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="e-title">Title / username</label><input class="inp" id="e-title" value="${esc(i.title)}"></div>
+        <div class="field"><label for="e-price">Price, USD</label><input class="inp" id="e-price" inputmode="decimal" value="${esc(i.price)}"></div>
+      </div>
+      <div class="field"><label for="e-desc">Description</label><textarea class="inp" id="e-desc" rows="5">${esc(i.description || "")}</textarea></div>
+      ${isNew ? `<label class="row" style="margin-bottom:12px"><input type="checkbox" id="e-pin"> Pin to the top</label>`
+              : `<div class="field"><label for="e-note">Moderator note (shown to the author if rejected)</label><input class="inp" id="e-note" value="${esc(i.modNote || "")}"></div>`}
+      <div class="row" style="justify-content:flex-end"><button class="btn ghost" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="e-save">${isNew ? "Publish" : "Save"}</button></div>`, true);
+    const cat = $("#e-cat", d), sub = $("#e-sub", d);
+    const syncSub = () => { sub.innerHTML = CATS[cat.value][1].map(s => `<option>${esc(s)}</option>`).join(""); sub.disabled = !CATS[cat.value][1].length; };
+    cat.onchange = syncSub; sub.disabled = !CATS[i.category]?.[1].length;
+    $("#e-save", d).onclick = e => {
+      const fields = { category: cat.value, sub: sub.value, title: $("#e-title", d).value, price: $("#e-price", d).value, description: $("#e-desc", d).value };
+      if (isNew) fields.pinned = $("#e-pin", d).checked; else fields.modNote = $("#e-note", d).value;
+      act(e.currentTarget, () => isNew ? call("createListing", { fields }) : call("editListing", { id: i.id, fields }), isNew ? "Published" : "Saved").then(r => r && closeOverlay());
+    };
+  }
+
+  /* ================= members ================= */
+  function vMembers() {
+    const q = S.q.toLowerCase();
+    const list = S.users.filter(u => !q || [u.username, u.ip, u.bio, u.badge].join(" ").toLowerCase().includes(q));
+    $("#main").innerHTML = top("Members", `${S.users.length} accounts. Click anyone to ban, mute, warn, edit or reset their password.`) + `
+      <div class="filters"><input class="inp" id="q" placeholder="Search username, IP, badge" value="${esc(S.q)}"></div>
+      ${list.length ? `<div class="tablewrap glass"><table><thead><tr><th>Member</th><th>Status</th><th>Threads</th><th>Joined</th><th>Last seen</th><th>IP</th><th></th></tr></thead><tbody>
+        ${list.map(u => `<tr><td><div class="who">${avatar(u)}<div><b>${esc(u.username)}${u.badge ? `<span class="pill solid">${esc(u.badge)}</span>` : ""}</b><span>${esc(u.bio || "")}</span></div></div></td>
+          <td>${u.banned ? `<span class="pill">banned</span>` : ""}${u.muted ? `<span class="pill">muted</span>` : ""}${u.warnings ? `<span class="pill">${u.warnings} warn</span>` : ""}${!u.banned && !u.muted && !u.warnings ? `<span class="muted">ok</span>` : ""}</td>
+          <td class="mono">${u.live}/${u.threads}</td><td>${esc(new Date(u.createdAt).toLocaleDateString())}</td><td>${ago(u.lastSeen)}</td><td class="mono">${esc(u.ip || "—")}</td>
+          <td><button class="btn sm" type="button" data-open="${esc(u.key)}">Manage</button></td></tr>`).join("")}</tbody></table></div>`
+        : `<div class="empty">No members found.</div>`}`;
+    searchBox("", vMembers);
+    $$("[data-open]").forEach(b => b.onclick = () => memberDrawer(b.dataset.open));
+  }
+
+  async function memberDrawer(name) {
+    const d = drawer(`<p class="muted">Loading…</p>`);
+    let r;
+    try { r = await call("user", { username: name }); } catch (e) { d.innerHTML = `<div class="d-head"><h2>Member</h2><button class="x" type="button" data-close>×</button></div><div class="err">${esc(e.message)}</div>`; return; }
+    const u = r.user;
+    d.innerHTML = `
+      <div class="d-head"><div class="row" style="gap:14px">${avatar(u, "lg")}<div><h2>${esc(u.username)}${u.badge ? `<span class="pill solid">${esc(u.badge)}</span>` : ""}</h2>
+        <div class="muted">${u.ban ? `Banned${u.ban.until ? " until " + when(u.ban.until) : " forever"}` : u.mute ? `Muted (${esc(u.mute.scope)})${u.mute.until ? " until " + when(u.mute.until) : " forever"}` : "Active"} · seen ${ago(u.lastSeen)}</div></div></div>
+        <button class="x" type="button" data-close>×</button></div>
+      <div class="row" style="margin-bottom:16px"><a class="btn" href="/#/u/${encodeURIComponent(u.key)}" target="_blank" style="text-decoration:none">View profile</a><button class="btn" type="button" id="m-msg">Message</button><button class="btn" type="button" id="m-chats">Read chats</button></div>
+
+      <div class="sec"><h4>Ban</h4>
+        ${u.ban ? `<p style="margin:0 0 10px">Reason: ${esc(u.ban.reason || "—")}</p><button class="btn primary" type="button" id="m-unban">Unban</button>`
+          : `<div class="two"><div class="field"><label for="b-dur">Length</label>${durSelect("b-dur", "0")}</div><div class="field"><label for="b-why">Reason</label><input class="inp" id="b-why" placeholder="fake proof, scam…"></div></div>
+            <div class="row" style="margin-bottom:10px"><label class="row"><input type="checkbox" id="b-ip"> also IP</label><label class="row"><input type="checkbox" id="b-dev"> also device</label><label class="row"><input type="checkbox" id="b-keep"> keep their threads</label></div>
+            <button class="btn danger" type="button" id="m-ban">Ban ${esc(u.username)}</button>`}
+      </div>
+
+      <div class="sec"><h4>Mute</h4>
+        ${u.mute ? `<p style="margin:0 0 10px">${esc(u.mute.scope)} · ${esc(u.mute.reason || "no reason")}</p><button class="btn primary" type="button" id="m-unmute">Unmute</button>`
+          : `<div class="two"><div class="field"><label for="mu-scope">Block</label><select class="inp" id="mu-scope"><option value="both">Messages and new threads</option><option value="messages">Messages only</option><option value="posting">New threads only</option></select></div>
+            <div class="field"><label for="mu-dur">Length</label>${durSelect("mu-dur", "1440")}</div></div>
+            <div class="field"><label for="mu-why">Reason (they'll see it)</label><input class="inp" id="mu-why" placeholder="spam in messages"></div>
+            <button class="btn" type="button" id="m-mute">Mute</button>`}
+      </div>
+
+      <div class="sec"><h4>Warn <span class="muted">· ${u.warnings.length} so far</span></h4>
+        <div class="row"><input class="inp" id="w-why" placeholder="What they did wrong — sent to them from support" style="flex:1"><button class="btn" type="button" id="m-warn">Send warning</button></div>
+        ${u.warnings.length ? `<div class="tech" style="margin-top:10px;flex-direction:column">${u.warnings.slice(-5).reverse().map(w => `<span>${ago(w.at)} · <b>${esc(w.reason)}</b></span>`).join("")}</div><button class="btn sm ghost" type="button" id="m-clearw" style="margin-top:8px">Clear warnings</button>` : ""}
+      </div>
+
+      <div class="sec"><h4>Profile</h4>
+        <div class="field"><label for="p-badge">Badge next to their name (empty = none)</label>
+          <div class="row"><input class="inp" id="p-badge" maxlength="20" value="${esc(u.badge)}" placeholder="Verified, Trusted, Staff…" style="flex:1"><button class="btn" type="button" id="m-badge">Save badge</button></div>
+          <div class="row" style="margin-top:6px">${["Verified", "Trusted seller", "Staff", "VIP"].map(b => `<button class="btn sm ghost" type="button" data-badge="${b}">${b}</button>`).join("")}</div></div>
+        <div class="field"><label for="p-bio">Bio</label><textarea class="inp" id="p-bio" maxlength="200" rows="2">${esc(u.bio)}</textarea></div>
+        <div class="row"><button class="btn" type="button" id="m-bio">Save bio</button>${u.avatarVer ? `<button class="btn" type="button" id="m-av">Remove avatar</button>` : ""}</div>
+      </div>
+
+      <div class="sec"><h4>Account</h4>
+        <div class="row"><button class="btn" type="button" id="m-reset">Reset password</button><button class="btn" type="button" id="m-kick">Log out everywhere</button></div>
+        <div id="m-secret" style="margin-top:10px"></div>
+        <dl class="kv" style="margin-top:14px"><dt>Member #</dt><dd>${u.uid || "—"}</dd><dt>Joined</dt><dd>${esc(when(u.createdAt))}</dd><dt>Last login</dt><dd>${esc(when(u.lastLoginAt))}</dd>
+          <dt>Sign-up IP</dt><dd>${esc(u.ip || "—")}</dd><dt>Last IP</dt><dd>${esc(u.lastIp || "—")}</dd><dt>Device</dt><dd>${esc(u.clientId || "—")}</dd></dl>
+      </div>
+
+      <div class="sec"><h4>Threads (${r.threads.length})</h4>
+        ${r.threads.length ? r.threads.map(t => `<div class="row" style="justify-content:space-between;padding:6px 0;border-top:1px solid var(--line)"><span class="mono">${esc(title(t))}</span><span><span class="pill ${t.status}">${t.status}</span>${t.pinned ? `<span class="pill solid">pinned</span>` : ""}</span></div>`).join("") : `<p class="muted" style="margin:0">None.</p>`}
+      </div>
+
+      <div class="sec"><h4>Delete account</h4>
+        <label class="row" style="margin-bottom:10px"><input type="checkbox" id="del-th" checked> also delete their threads</label>
+        <button class="btn danger" type="button" id="m-del">Delete ${esc(u.username)}</button>
+      </div>`;
+    const re = () => memberDrawer(u.key);
+    const on = (id, fn) => { const b = $("#" + id, d); if (b) b.onclick = () => fn(b); };
+    on("m-msg", () => { closeOverlay(); S.tab = "support"; S.chatWith = u.key; render(); });
+    on("m-chats", () => chatsViewer(u.key));
+    on("m-ban", b => act(b, () => call("banUser", { username: u.key, minutes: $("#b-dur", d).value, reason: $("#b-why", d).value, withIp: $("#b-ip", d).checked, withDevice: $("#b-dev", d).checked, keepThreads: $("#b-keep", d).checked }), r => `Banned · ${r.rejected} thread(s) taken down`).then(re));
+    on("m-unban", b => act(b, () => call("unban", { key: "user:" + u.key }), "Unbanned").then(re));
+    on("m-mute", b => act(b, () => call("mute", { username: u.key, scope: $("#mu-scope", d).value, minutes: $("#mu-dur", d).value, reason: $("#mu-why", d).value }), "Muted").then(re));
+    on("m-unmute", b => act(b, () => call("unmute", { username: u.key }), "Unmuted").then(re));
+    on("m-warn", b => act(b, () => call("warn", { username: u.key, reason: $("#w-why", d).value }), "Warning sent").then(re));
+    on("m-clearw", b => act(b, () => call("editUser", { username: u.key, clearWarnings: true }), "Warnings cleared").then(re));
+    $$("[data-badge]", d).forEach(b => b.onclick = () => { $("#p-badge", d).value = b.dataset.badge; });
+    on("m-badge", b => act(b, () => call("editUser", { username: u.key, badge: $("#p-badge", d).value }), "Badge saved").then(re));
+    on("m-bio", b => act(b, () => call("editUser", { username: u.key, bio: $("#p-bio", d).value }), "Bio saved").then(re));
+    on("m-av", b => act(b, () => call("editUser", { username: u.key, removeAvatar: true }), "Avatar removed").then(re));
+    on("m-kick", b => act(b, () => call("logoutAll", { username: u.key }), "Logged out on all devices"));
+    on("m-reset", async b => {
+      const r2 = await act(b, () => call("resetPassword", { username: u.key }));
+      if (r2?.password) $("#m-secret", d).innerHTML = `<p class="muted" style="margin:0 0 6px">New password. Send it to them; they can change it in Edit profile.</p><div class="secret">${esc(r2.password)}</div>`;
+    });
+    on("m-del", b => {
+      if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Click again to delete forever"; return; }
+      act(b, () => call("deleteUser", { username: u.key, withThreads: $("#del-th", d).checked }), "Account deleted").then(closeOverlay);
+    });
+  }
+
+  async function chatsViewer(k) {
+    const d = drawer(`<div class="d-head"><h2>Chats of ${esc(k)}</h2><button class="x" type="button" data-close>×</button></div><div id="cv">Loading…</div>`);
+    const box = $("#cv", d);
+    try {
+      const { items } = await call("userConvos", { username: k });
+      if (!items.length) { box.innerHTML = `<p class="muted">No conversations.</p>`; return; }
+      box.innerHTML = `<div class="list">${items.map(c => `<button class="c-item glass" type="button" data-o="${esc(c.with)}">${avatar(c.user)}<div><b>${esc(c.user?.username || c.with)}</b><div class="last">${esc(c.last)}</div></div></button>`).join("")}</div><div id="cv-msgs" style="margin-top:14px"></div>`;
+      $$("[data-o]", d).forEach(b => b.onclick = () => openConvo(k, b.dataset.o));
+    } catch (e) { box.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+    async function openConvo(a, o) {
+      const r = await call("convo", { a, b: o });
+      const name = x => r.users[x]?.username || x;
+      $("#cv-msgs", d).innerHTML = `<div class="glass" style="padding:0"><div class="c-head">${esc(name(a))} ↔ ${esc(name(o))}<span class="muted" style="font-weight:400;font-size:12px">hover a message to delete it</span></div>
+        <div class="c-body" style="max-height:50vh">${r.messages.map(m => `<div class="msg ${m.from === a ? "mine" : ""}"><b style="font-size:11.5px;opacity:.7">${esc(name(m.from))}</b><br>${esc(m.text)}<small>${esc(when(m.at))}</small>
+          <button class="del" type="button" data-del="${esc(m.id)}" title="Delete message">×</button></div>`).join("") || `<div class="c-empty">Empty.</div>`}</div></div>`;
+      $$("[data-del]", d).forEach(b => b.onclick = () => act(b, () => call("deleteMessage", { a, b: o, id: b.dataset.del }), "Message deleted").then(() => openConvo(a, o)));
+    }
+  }
+
+  /* ================= support ================= */
+  function vSupport() {
+    $("#main").innerHTML = top("Support", "Members write to “wynuser support”. You answer here.") + `
+      <form class="filters" id="new-f"><input class="inp" id="new-to" placeholder="Start a conversation: username"><button class="btn" type="submit">Open</button></form>
+      <div class="chat glass">
+        <div class="c-list">${S.support.length ? S.support.map(c => `
+          <button class="c-item ${S.chatWith === c.with ? "on" : ""}" type="button" data-with="${esc(c.with)}">${avatar(c.user)}
+            <div><b>${esc(c.user?.username || c.with)}</b><div class="last">${c.lastFrom === "support" ? "You: " : ""}${esc(c.last)}</div></div>${c.unread ? `<span class="dotu"></span>` : ""}</button>`).join("")
+          : `<p class="muted" style="padding:12px;margin:0">No messages yet.</p>`}</div>
+        <div class="c-main" id="c-main"><div class="c-empty">Pick a conversation.</div></div>
+      </div>`;
+    $$("[data-with]").forEach(b => b.onclick = () => { S.chatWith = b.dataset.with; vSupport(); });
+    $("#new-f").onsubmit = e => { e.preventDefault(); const v = $("#new-to").value.trim().replace(/^@/, "").toLowerCase(); if (v) { S.chatWith = v; vSupport(); } };
+    if (S.chatWith) openSupport(S.chatWith);
+  }
+  async function openSupport(who) {
+    clearInterval(chatTimer);
+    const main = $("#c-main");
+    let msgs = [], user;
+    try { const r = await call("supportOpen", { with: who }); msgs = r.messages; user = r.user; }
+    catch (e) { main.innerHTML = `<div class="c-empty">${esc(e.message)}</div>`; return; }
+    main.innerHTML = `<div class="c-head">${avatar(user)}${esc(user?.username || who)}<button class="btn sm ghost" type="button" id="c-manage" style="margin-left:auto">Manage member</button></div>
+      <div class="c-body" id="c-body"></div>
+      <form class="c-input" id="c-form"><input class="inp" id="c-text" placeholder="Reply as wynuser support" autocomplete="off"><button class="btn primary" style="height:38px">Send</button></form>`;
+    $("#c-manage").onclick = () => memberDrawer(who);
+    const draw = () => { const b = $("#c-body"); if (!b) return; b.innerHTML = msgs.length ? msgs.map(m => `<div class="msg ${m.from === "support" ? "mine" : ""}">${esc(m.text)}<small>${esc(when(m.at))}</small></div>`).join("") : `<div class="c-empty">No messages yet.</div>`; b.scrollTop = b.scrollHeight; };
+    draw();
+    $("#c-form").onsubmit = async e => {
+      e.preventDefault();
+      const t = $("#c-text"), text = t.value.trim(); if (!text) return;
+      t.value = "";
+      try { const r = await call("supportSend", { to: who, text }); msgs.push(r.message); draw(); } catch (err) { t.value = text; toast(err.message); }
+    };
+    $("#c-text").focus();
+    chatTimer = setInterval(async () => {
+      if (S.tab !== "support" || S.chatWith !== who) return clearInterval(chatTimer);
+      try { const r = await call("supportOpen", { with: who }); if (r.messages.length !== msgs.length) { msgs = r.messages; draw(); } } catch {}
+    }, 5000);
+  }
+
+  /* ================= bans ================= */
+  function vBans() {
+    const kind = k => ({ ip: "IP address", cid: "Device", user: "Account", tg: "Telegram (old)" })[k.split(":")[0]] || "Ban";
+    $("#main").innerHTML = top("Bans", "Active bans. Temporary ones disappear on their own.") + `
+      <form class="glass" id="addban" style="padding:14px;margin-bottom:14px"><div class="row">
+        <input class="inp" id="nb-user" placeholder="Username to ban" style="flex:1 1 180px;width:auto">
+        <span style="flex:0 1 150px">${durSelect("nb-dur", "0")}</span>
+        <input class="inp" id="nb-why" placeholder="Reason" style="flex:2 1 200px;width:auto">
+        <label class="row"><input type="checkbox" id="nb-ip"> IP</label>
+        <button class="btn danger" type="submit">Ban</button></div></form>
+      <div class="list">${S.bans.length ? S.bans.map(b => `
+        <article class="item slim glass"><span class="av">${esc(kind(b.key)[0])}</span>
+          <div class="meta"><div class="cat">${esc(kind(b.key))}${b.until ? `<span class="pill">until ${esc(new Date(b.until).toLocaleString())}</span>` : `<span class="pill solid">forever</span>`}</div>
+            <h3>${esc(b.key.slice(b.key.indexOf(":") + 1))}</h3>
+            <div class="tech"><span>Reason <b>${esc(b.reason || "—")}</b></span>${b.username ? `<span>Account <b>${esc(b.username)}</b></span>` : ""}<span>Since <b>${esc(when(b.at))}</b></span></div></div>
+          <div class="acts"><button class="btn" type="button" data-unban="${esc(b.key)}">Unban</button></div></article>`).join("") : `<div class="empty">No active bans.</div>`}</div>`;
+    $("#addban").onsubmit = e => { e.preventDefault(); act(e.submitter, () => call("banUser", { username: $("#nb-user").value, minutes: $("#nb-dur").value, reason: $("#nb-why").value, withIp: $("#nb-ip").checked }), r => `Banned · ${r.rejected} thread(s) taken down`); };
+    $$("[data-unban]").forEach(b => b.onclick = () => act(b, () => call("unban", { key: b.dataset.unban }), "Unbanned"));
+  }
+
+  /* ================= settings ================= */
+  async function vSettings() {
+    $("#main").innerHTML = top("Settings", "Site-wide switches, the notice bar and announcements.") + `<p class="muted">Loading…</p>`;
+    let s;
+    try { s = (await call("getSettings")).settings; } catch (e) { return; }
+    const sw = (k, t, sub) => `<div class="switch"><div><b>${t}</b><span>${sub}</span></div><button class="toggle ${s[k] ? "on" : ""}" type="button" role="switch" aria-checked="${!!s[k]}" data-sw="${k}" aria-label="${t}"></button></div>`;
+    $("#main").innerHTML = top("Settings", "Site-wide switches, the notice bar and announcements.") + `
+      <div class="grid2">
+        <section class="panel glass"><h3>Notice bar</h3>
+          <p class="muted" style="margin:0 0 10px">The line at the top of every page. “Questions? Message support” is added after it.</p>
+          <textarea class="inp" id="s-notice" maxlength="300" rows="3">${esc(s.notice)}</textarea>
+          <div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="s-save-notice">Save notice</button></div>
+        </section>
+        <section class="panel glass"><h3>Switches</h3>
+          ${sw("registrations", "Sign-ups", "New people can create accounts")}
+          ${sw("posting", "New threads", "Members can post threads. Turn off for maintenance.")}
+          ${sw("messaging", "Member messages", "Members can message each other. Support always works.")}
+        </section>
+        <section class="panel glass" style="grid-column:1/-1"><h3>Message everyone</h3>
+          <p class="muted" style="margin:0 0 10px">Sends a message from “wynuser support” to every member's inbox.</p>
+          <textarea class="inp" id="s-bc" rows="3" maxlength="2000" placeholder="New rules from Monday: …"></textarea>
+          <div class="row" style="margin-top:10px"><button class="btn" type="button" id="s-bc-go">Send to ${S.stats.users || 0} members</button></div>
+        </section>
+      </div>`;
+    $$("[data-sw]").forEach(b => b.onclick = () => {
+      const k = b.dataset.sw, v = !b.classList.contains("on");
+      act(b, () => call("setSettings", { settings: { [k]: v } }), `${b.getAttribute("aria-label")} ${v ? "on" : "off"}`);
+    });
+    $("#s-save-notice").onclick = e => act(e.currentTarget, () => call("setSettings", { settings: { notice: $("#s-notice").value } }), "Notice saved");
+    $("#s-bc-go").onclick = e => {
+      const b = e.currentTarget, text = $("#s-bc").value.trim();
+      if (!text) return toast("Write the message first");
+      if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Click again to send to everyone"; return; }
+      act(b, () => call("broadcast", { text }), r => `Sent to ${r.sent} members`);
+    };
+  }
+
+  /* ================= log ================= */
+  function vLog() {
+    $("#main").innerHTML = top("Log", "Every action taken in this panel, newest first.") +
+      (S.log.length ? `<div class="tablewrap glass"><table class="log"><thead><tr><th>When</th><th>Action</th><th>Target</th><th>Details</th></tr></thead><tbody>
+        ${S.log.map(e => `<tr><td>${esc(when(e.at))}</td><td><b>${esc(e.action)}</b></td><td>${esc(e.target)}</td><td class="muted">${esc(e.detail)}</td></tr>`).join("")}</tbody></table></div>`
+        : `<div class="empty">Nothing yet.</div>`);
+  }
+
+  /* ================= overlays ================= */
+  function drawer(html) {
+    $("#overlay").innerHTML = `<div class="scrim"><aside class="drawer" role="dialog" aria-modal="true">${html}</aside></div>`;
+    return wireOverlay($(".drawer"));
+  }
+  function dialog(html) {
+    $("#overlay").innerHTML = `<div class="scrim center"><div class="dialog" role="dialog" aria-modal="true">${html}</div></div>`;
+    return wireOverlay($(".dialog"));
+  }
+  function wireOverlay(box) {
+    const scrim = $("#overlay .scrim");
+    scrim.addEventListener("mousedown", e => { if (e.target === scrim) closeOverlay(); });
+    box.addEventListener("click", e => { if (e.target.closest("[data-close]")) closeOverlay(); });
+    return box;
+  }
+  function closeOverlay() { $("#overlay").innerHTML = ""; }
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeOverlay(); });
+
+  probe();
+})();
+</script>
+</body>
+</html>
