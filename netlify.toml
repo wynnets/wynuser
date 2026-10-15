@@ -1,7 +1,11 @@
-# Everything sits in one folder: pages and server functions side by side.
+# The repository is flat (all files side by side, easy to upload on GitHub).
+# During the build Netlify sorts them into the usual layout:
+#   site/               -> the pages people see
+#   netlify/functions/  -> the server part (accounts, threads, messages, admin)
 [build]
-  publish = "."
-  functions = "."
+  command = "mkdir -p site netlify/functions && cp *.html *.png site/ && cp *.mjs netlify/functions/ && ls site netlify/functions"
+  publish = "site"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
