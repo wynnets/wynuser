@@ -190,7 +190,8 @@ async function userCards(st, keys) {
 
 /* ---- this function ---- */
 
-const getPassword = () => globalThis.Netlify?.env?.get?.("ADMIN_PASSWORD") || process.env.ADMIN_PASSWORD || "";
+// Spaces around the value (easy to paste by accident) are ignored on both sides
+const getPassword = () => String(globalThis.Netlify?.env?.get?.("ADMIN_PASSWORD") || process.env.ADMIN_PASSWORD || "").trim().normalize("NFC");
 function safeEqual(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
   let diff = 0;
@@ -199,7 +200,7 @@ function safeEqual(a, b) {
 }
 const norm = (v) => String(v || "").trim().replace(/^@/, "").toLowerCase().slice(0, 20);
 const SOCIAL = ["Minecraft", "Roblox", "Telegram", "Discord", "TikTok", "Instagram", "X - Twitter"];
-const CATS = { usernames: SOCIAL, numbers: [], proxy: SOCIAL, gifts: [], gaming: ["Minecraft", "Roblox", "CS GO", "Fortnite"], other: [] };
+const CATS = { usernames: SOCIAL, numbers: [], gifts: [], gaming: ["Minecraft", "Roblox", "CS GO", "Fortnite"], other: [] };
 /** minutes -> absolute time, 0 / empty = forever */
 const untilFrom = (minutes) => (Number(minutes) > 0 ? Date.now() + Number(minutes) * 60000 : 0);
 
@@ -207,7 +208,9 @@ export default async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   const password = getPassword();
   if (!password) return json({ error: "ADMIN_PASSWORD is not set in Netlify environment variables." }, 500);
-  if (!safeEqual(req.headers.get("x-admin-key") || "", password)) {
+  let sent = req.headers.get("x-admin-key") || "";
+  try { sent = decodeURIComponent(sent); } catch {}
+  if (!safeEqual(sent.trim().normalize("NFC"), password)) {
     await new Promise((r) => setTimeout(r, 600));
     return json({ error: "Wrong password." }, 401);
   }

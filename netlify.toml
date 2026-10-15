@@ -13,6 +13,15 @@
 [functions]
   node_bundler = "esbuild"
 
+# Security policy: only the site's own scripts may run (matched by fingerprint).
+# This also stops Netlify from injecting the "Powered by Netlify" badge.
+# If index.html or admin.html change, the fingerprints below must be updated
+# (old fingerprints are kept too, so uploading files in any order never breaks the site).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-nwYLIgesQ1duOknvIM4dFM/Ji2ZEdJd+tZ94TE+4aL4=' 'sha256-3Lw2ipv5paBQ1FLjhIEGUaR2Od/IjiV70hLyCk8+png=' 'sha256-W+bUH3gFdEHKl91GqXU2egKGrBDOTcOZ8P0znoQFOjg=' 'sha256-nIuLLZsEJMRzlnrtFQhYIqAWkmCE0YalHM9DEok+z28='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+
 [[headers]]
   for = "/admin.html"
   [headers.values]

@@ -194,7 +194,6 @@ const SOCIAL = ["Minecraft", "Roblox", "Telegram", "Discord", "TikTok", "Instagr
 const CATS = {
   usernames: SOCIAL,
   numbers: [],
-  proxy: SOCIAL,
   gifts: [],
   gaming: ["Minecraft", "Roblox", "CS GO", "Fortnite"],
   other: [],
@@ -214,6 +213,7 @@ export default async (req, context) => {
       .map((l) => ({
         id: l.id, category: l.category, sub: l.sub, title: l.title, price: l.price, description: l.description,
         author: cards[l.author]?.username || l.authorName || l.author, authorKey: l.author,
+        ...(l.category === "proxy" ? { category: "usernames" } : {}), // Proxy section was removed
         authorAvatar: cards[l.author]?.avatarVer || 0, authorBadge: cards[l.author]?.badge || "",
         createdAt: l.createdAt, approvedAt: l.approvedAt, pinned: !!l.pinned, pinnedAt: l.pinnedAt || 0,
       }))
@@ -243,7 +243,7 @@ export default async (req, context) => {
   if (!(category in CATS)) return json({ error: "Choose a category." }, 400);
   if (CATS[category].length && !CATS[category].includes(sub)) return json({ error: "Choose a platform." }, 400);
   if (!title) return json({ error: "Fill in the title." }, 400);
-  if ((category === "usernames" || category === "proxy") && !USERNAME_ITEM_RE.test(title)) {
+  if (category === "usernames" && !USERNAME_ITEM_RE.test(title)) {
     return json({ error: "Usernames must start with a letter, be at least 4 characters and use only English letters, numbers and _." }, 400);
   }
   if (!Number.isFinite(price) || price <= 0 || price > 10_000_000) return json({ error: "Enter a valid price." }, 400);

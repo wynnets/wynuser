@@ -204,8 +204,8 @@ td .who span{font-size:12px;color:var(--faint)}
   const when = t => t ? new Date(t).toLocaleString() : "—";
   const ago = t => { if (!t) return "—"; const s = (Date.now() - t) / 1000 | 0; if (s < 60) return "just now"; const m = s / 60 | 0; if (m < 60) return m + "m ago"; const h = m / 60 | 0; if (h < 24) return h + "h ago"; return (h / 24 | 0) + "d ago"; };
   const SOCIAL = ["Minecraft", "Roblox", "Telegram", "Discord", "TikTok", "Instagram", "X - Twitter"];
-  const CATS = { usernames: ["Usernames", SOCIAL], numbers: ["Numbers", []], proxy: ["Proxy", SOCIAL], gifts: ["Gifts", []], gaming: ["Gaming", ["Minecraft", "Roblox", "CS GO", "Fortnite"]], other: ["Other", []] };
-  const AT = { usernames: true, proxy: true };
+  const CATS = { usernames: ["Usernames", SOCIAL], numbers: ["Numbers", []], gifts: ["Gifts", []], gaming: ["Gaming", ["Minecraft", "Roblox", "CS GO", "Fortnite"]], other: ["Other", []] };
+  const AT = { usernames: true, proxy: true }; // proxy kept only so old threads still show with @
   const title = l => (AT[l.category] ? "@" : "") + l.title;
   const DURATIONS = [["60", "1 hour"], ["1440", "24 hours"], ["10080", "7 days"], ["43200", "30 days"], ["0", "Forever"]];
   const durSelect = (id, def = "1440") => `<select class="inp" id="${id}">${DURATIONS.map(([v, l]) => `<option value="${v}" ${v === def ? "selected" : ""}>${l}</option>`).join("")}</select>`;
@@ -221,7 +221,7 @@ td .who span{font-size:12px;color:var(--faint)}
   let chatTimer = null;
 
   async function call(action, data = {}) {
-    const r = await fetch("/api/admin", { method: "POST", headers: { "content-type": "application/json", "x-admin-key": key }, body: JSON.stringify({ action, ...data }) });
+    const r = await fetch("/api/admin", { method: "POST", headers: { "content-type": "application/json", "x-admin-key": encodeURIComponent(key) }, body: JSON.stringify({ action, ...data }) });
     if (!(r.headers.get("content-type") || "").includes("json")) { renderSetup("functions"); throw new Error("setup"); }
     const d = await r.json().catch(() => ({}));
     if (r.status === 500 && /ADMIN_PASSWORD/.test(d.error || "")) { renderSetup("password"); throw new Error("setup"); }
@@ -242,13 +242,17 @@ td .who span{font-size:12px;color:var(--faint)}
     $("#app").innerHTML = `<form class="login glass" id="login" method="post" action="#" autocomplete="on">
       <img src="logo.png" alt="wynuser"><p>Moderator panel</p>
       <input type="text" name="username" value="wynuser-admin" autocomplete="username" hidden readonly>
-      <input class="inp" id="pw" name="password" type="password" placeholder="Admin password" autocomplete="current-password" required>
-      ${msg ? `<div class="err">${esc(msg)}</div>` : ""}
+      <div style="position:relative"><input class="inp" id="pw" name="password" type="password" placeholder="Admin password" autocomplete="current-password" required style="height:42px;padding-right:70px">
+        <button type="button" id="pw-eye" class="btn sm ghost" style="position:absolute;right:6px;top:7px">Show</button></div>
+      <div id="pw-caps" class="muted" style="font-size:12.5px" hidden>Caps Lock is on</div>
+      ${msg ? `<div class="err">${esc(msg)}${/wrong/i.test(msg) ? "<br><span class='muted'>Check the keyboard layout (EN/RU), Caps Lock, and that the value in Netlify has no extra characters. Changed it? Run Trigger deploy first.</span>" : ""}</div>` : ""}
       <button class="btn primary" type="submit" style="height:42px">Sign in</button></form>`;
     $("#pw").focus();
+    $("#pw-eye").onclick = () => { const p = $("#pw"); const show = p.type === "password"; p.type = show ? "text" : "password"; $("#pw-eye").textContent = show ? "Hide" : "Show"; p.focus(); };
+    $("#pw").addEventListener("keyup", e => { $("#pw-caps").hidden = !(e.getModifierState && e.getModifierState("CapsLock")); });
     $("#login").onsubmit = async e => {
       e.preventDefault();
-      key = $("#pw").value;
+      key = $("#pw").value.trim();
       try {
         await loadAll();
         try { localStorage.setItem("wyn_admin", key); } catch {}
@@ -275,7 +279,7 @@ td .who span{font-size:12px;color:var(--faint)}
   }
   async function probe() {
     try {
-      const r = await fetch("/api/admin", { method: "POST", headers: { "content-type": "application/json", "x-admin-key": key || "-" }, body: '{"action":"stats"}' });
+      const r = await fetch("/api/admin", { method: "POST", headers: { "content-type": "application/json", "x-admin-key": encodeURIComponent(key || "-") }, body: '{"action":"stats"}' });
       if (!(r.headers.get("content-type") || "").includes("json")) return renderSetup("functions");
       const d = await r.json().catch(() => ({}));
       if (r.status === 500 && /ADMIN_PASSWORD/.test(d.error || "")) return renderSetup("password");
@@ -365,7 +369,7 @@ td .who span{font-size:12px;color:var(--faint)}
     return `<article class="item glass" data-row="${esc(i.id)}">
       <button class="proof" type="button" data-proof="${esc(i.id)}" data-zoom="${esc(i.id)}" title="Open full size">${i.official ? "Official" : pr ? `<img src="${pr}" alt="Proof">` : pr === "" ? "No proof" : "Loading…"}</button>
       <div class="meta">
-        <div class="cat">${esc(CATS[i.category]?.[0] || i.category)}${i.sub ? " · " + esc(i.sub) : ""}<span class="pill ${i.status}">${i.status}</span>${i.pinned ? `<span class="pill solid">pinned</span>` : ""}${i.official ? `<span class="pill">official</span>` : ""}</div>
+        <div class="cat">${esc(CATS[i.category]?.[0] || (i.category === "proxy" ? "Proxy (old)" : i.category))}${i.sub ? " · " + esc(i.sub) : ""}<span class="pill ${i.status}">${i.status}</span>${i.pinned ? `<span class="pill solid">pinned</span>` : ""}${i.official ? `<span class="pill">official</span>` : ""}</div>
         <h3>${esc(title(i))}</h3>
         <div class="mono">${money(i.price)}</div>
         <div class="desc">${esc(i.description || "No description.")}</div>
@@ -429,6 +433,7 @@ td .who span{font-size:12px;color:var(--faint)}
   function threadEditor(item) {
     const isNew = !item;
     const i = item || { category: "usernames", sub: "Telegram", title: "", price: "", description: "" };
+    if (!CATS[i.category]) i.category = "usernames"; // old Proxy threads get moved to Usernames on save
     const subOpts = c => CATS[c][1].map(s => `<option ${s === i.sub ? "selected" : ""}>${esc(s)}</option>`).join("");
     const d = dialog(`<div class="d-head"><h2>${isNew ? "Official thread" : "Edit thread"}</h2><button class="x" type="button" data-close>×</button></div>
       ${isNew ? `<p class="muted" style="margin:-8px 0 14px">Posted as “wynuser”, goes live right away, no proof needed.</p>` : ""}
