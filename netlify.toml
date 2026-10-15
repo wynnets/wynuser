@@ -1,6 +1,7 @@
+# Everything sits in one folder: pages and server functions side by side.
 [build]
-  publish = "public"
-  functions = "netlify/functions"
+  publish = "."
+  functions = "."
 
 [build.environment]
   NODE_VERSION = "20"
@@ -8,7 +9,6 @@
 [functions]
   node_bundler = "esbuild"
 
-# Админка не индексируется поисковиками
 [[headers]]
   for = "/admin.html"
   [headers.values]
